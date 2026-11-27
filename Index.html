@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz Master</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #11131a;
+      color: #f4f6fb;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 24px;
+    }
+    .card {
+      max-width: 520px;
+      width: 100%;
+      background: #1b1f2c;
+      border: 1px solid #2e354a;
+      border-radius: 16px;
+      padding: 28px;
+      text-align: center;
+    }
+    button {
+      margin-top: 16px;
+      background: #f5b700;
+      color: #11131a;
+      border: 0;
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Quiz Master</h1>
+    <p id="question">Ready to test your knowledge?</p>
+    <button id="nextBtn" type="button">Start Quiz</button>
+  </div>
+  <script>
+    const questions = [
+      "What planet is closest to the Sun?",
+      "Which language runs natively in web browsers?",
+      "What is the capital city of Japan?"
+    ];
+    let index = 0;
+    document.getElementById("nextBtn").addEventListener("click", () => {
+      document.getElementById("question").textContent = questions[index % questions.length];
+      index += 1;
+    });
+  </script>
+</body>
+</html>
