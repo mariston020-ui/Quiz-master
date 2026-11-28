@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz Master — AI Quiz & Study Assistant</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #090d16;
+      color: #f1f5f9;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    header {
+      height: 56px;
+      padding: 0 16px;
+      background: #0f172a;
+      border-bottom: 1px solid #1e293b;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; }
+    .logo {
+      width: 32px; height: 32px; border-radius: 9px;
+      background: linear-gradient(135deg, #fbbf24, #f97316);
+      color: #090d16; font-weight: 900; font-size: 17px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .controls { display: flex; align-items: center; gap: 8px; }
+    select, button {
+      font-family: inherit;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    select {
+      background: #1e293b; color: #f8fafc;
+      border: 1px solid #334155; border-radius: 8px;
+      padding: 6px 8px; font-size: 12px;
+    }
+    .badge {
+      font-size: 11px; font-weight: 700;
+      padding: 5px 10px; border-radius: 999px;
+      border: 1px solid #334155; background: #1e293b; color: #f87171;
+    }
+    .badge.saved { color: #34d399; border-color: #065f46; background: #064e3b44; }
+    main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 16px;
+    }
+    .container { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+    .welcome { text-align: center; padding: 12px 0; display: flex; flex-direction: column; gap: 16px; }
+    .welcome h1 { font-size: 24px; font-weight: 800; }
+    .welcome p { font-size: 13px; color: #94a3b8; line-height: 1.5; }
+    .key-box {
+      background: #1c1917;
+      border: 1px solid #b45309;
+      border-radius: 14px;
+      padding: 14px;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .key-box-header { display: flex; justify-content: space-between; font-size: 12px; color: #fcd34d; font-weight: 600; }
+    .key-box-header a { color: #fbbf24; }
+    .key-row { display: flex; gap: 8px; }
+    .key-row input {
+      flex: 1; min-width: 0;
+      padding: 10px 12px; border-radius: 10px;
+      border: 1px solid #475569; background: #0f172a; color: #fff;
+      font-size: 13px;
+    }
+    .btn-primary {
+      background: #f59e0b; color: #090d16; font-weight: 700;
+      border: none; border-radius: 10px; padding: 10px 16px; font-size: 13px;
+    }
+    .btn-primary:active { background: #d97706; }
+    .cards { display: grid; grid-template-columns: 1fr; gap: 10px; text-align: left; }
+    @media (min-width: 600px) { .cards { grid-template-columns: 1fr 1fr; } }
+    .card {
+      background: #0f172a; border: 1px solid #1e293b;
+      border-radius: 14px; padding: 14px; color: #f1f5f9; text-align: left;
+    }
+    .card:active { border-color: #f59e0b; }
+    .card-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+    .card-desc { font-size: 12px; color: #94a3b8; }
+    .msg {
+      padding: 12px 14px; border-radius: 14px; font-size: 14px;
+      line-height: 1.55; max-width: 85%; white-space: pre-wrap; word-break: break-word;
+    }
+    .msg.user { align-self: flex-end; background: #f59e0b; color: #090d16; font-weight: 500; }
+    .msg.bot { align-self: flex-start; background: #0f172a; border: 1px solid #1e293b; color: #f1f5f9; }
+    footer {
+      padding: 12px 16px;
+      background: #0f172a;
+      border-top: 1px solid #1e293b;
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    footer input {
+      flex: 1; min-width: 0;
+      padding: 12px 14px; border-radius: 12px;
+      border: 1px solid #334155; background: #1e293b; color: #fff;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">Q</div>
+      <span>Quiz Master</span>
+    </div>
+    <div class="controls">
+      <select id="personaSelect">
+        <option value="host">🎤 Game Host</option>
+        <option value="tutor">🎓 Study Tutor</option>
+        <option value="hardcore">🔥 Hardcore</option>
+      </select>
+      <button type="button" id="keyBadge" class="badge">🔑 Key: Not Set</button>
+    </div>
+  </header>
+
+  <main id="chatScroll">
+    <div class="container" id="chatBox">
+      <div class="welcome" id="welcomeScreen">
+        <div>
+          <h1>Welcome to Quiz Master!</h1>
+          <p>Ask any trivia question, run a custom quiz on any topic, or paste study notes to test yourself.</p>
+        </div>
+
+        <div class="key-box" id="keyBox">
+          <div class="key-box-header">
+            <span>🔑 Gemini API Key (starts with AIza...)</span>
+            <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Get free key</a>
+          </div>
+          <div class="key-row">
+            <input type="text" id="apiKeyInput" placeholder="Paste AIzaSy... key here" />
+            <button type="button" id="saveKeyBtn" class="btn-primary">Save Key</button>
+          </div>
+          <div id="keyStatusText" style="font-size:12px; color:#34d399; display:none;"></div>
+        </div>
+
+        <div class="cards">
+          <button type="button" class="card" data-prompt="Start a 5-question general knowledge quiz! Ask Question 1 with choices A, B, C, and D, and wait for my guess.">
+            <div class="card-title">🎯 Play 5-Round Trivia</div>
+            <div class="card-desc">Interactive A/B/C/D questions with scorekeeping.</div>
+          </button>
+          <button type="button" class="card" data-prompt="Quiz me on Anime, Video Games, and Tech! Start with Question 1.">
+            <div class="card-title">🎮 Gaming & Tech Quiz</div>
+            <div class="card-desc">Test your knowledge across classics and modern hits.</div>
+          </button>
+          <button type="button" class="card" data-prompt="Give me a tricky riddle or brainteaser and let me guess before revealing the answer.">
+            <div class="card-title">🧩 Riddle & Brainteaser</div>
+            <div class="card-desc">Solve puzzles with optional hints.</div>
+          </button>
+          <button type="button" class="card" data-prompt="Help me study! Ask me what subject I want to be quizzed on, then test me one question at a time.">
+            <div class="card-title">📚 Custom Study Quiz</div>
+            <div class="card-desc">Practice any school subject or topic interactively.</div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <input type="text" id="userInput" placeholder="Type a topic, answer A/B/C/D, or ask anything..." />
+    <button type="button" id="sendBtn" class="btn-primary">Send</button>
+  </footer>
+
+  <script>
+    (function () {
+      const STORAGE_KEY = 'quiz_master_api_key_v2';
+      const MODEL_ID = 'gemini-3.5-flash-lite';
+      const history = [];
+
+      const PERSONAS = {
+        host: 'You are Quiz Master, an energetic AI Quiz Host & Assistant. Answer any question clearly or run interactive quizzes one question at a time (A/B/C/D), waiting for the user answer and keeping score.',
+        tutor: 'You are Quiz Master in Study Tutor mode. Quiz the user step-by-step on their study topic and explain every answer clearly.',
+        hardcore: 'You are Quiz Master in Hardcore Trivia mode. Ask challenging questions one at a time and track score strictly.'
+      };
+
+      const apiKeyInput = document.getElementById('apiKeyInput');
+      const saveKeyBtn = document.getElementById('saveKeyBtn');
+      const keyBadge = document.getElementById('keyBadge');
+      const keyBox = document.getElementById('keyBox');
+      const keyStatusText = document.getElementById('keyStatusText');
+      const userInput = document.getElementById('userInput');
+      const sendBtn = document.getElementById('sendBtn');
+      const chatBox = document.getElementById('chatBox');
+      const chatScroll = document.getElementById('chatScroll');
+      const welcomeScreen = document.getElementById('welcomeScreen');
+      const personaSelect = document.getElementById('personaSelect');
+
+      function getKey() {
+        try { return localStorage.getItem(STORAGE_KEY) || ''; } catch (e) { return ''; }
+      }
+
+      function setKey(val) {
+        try { localStorage.setItem(STORAGE_KEY, val); } catch (e) {}
+      }
+
+      function refreshKeyUI() {
+        const k = getKey();
+        if (k) {
+          keyBadge.textContent = '🔑 Key: Saved';
+          keyBadge.classList.add('saved');
+          apiKeyInput.value = k;
+          keyBox.style.display = 'none';
+        } else {
+          keyBadge.textContent = '🔑 Key: Not Set';
+          keyBadge.classList.remove('saved');
+          keyBox.style.display = 'flex';
+        }
+      }
+
+      saveKeyBtn.addEventListener('click', function () {
+        const val = apiKeyInput.value.trim();
+        if (!val) {
+          keyStatusText.style.display = 'block';
+          keyStatusText.style.color = '#f87171';
+          keyStatusText.textContent = 'Please paste your API key first.';
+          return;
+        }
+        setKey(val);
+        keyStatusText.style.display = 'block';
+        keyStatusText.style.color = '#34d399';
+        keyStatusText.textContent = 'Saved! You can now start a quiz below.';
+        setTimeout(refreshKeyUI, 600);
+      });
+
+      keyBadge.addEventListener('click', function () {
+        keyBox.style.display = keyBox.style.display === 'none' ? 'flex' : 'none';
+        if (welcomeScreen && welcomeScreen.parentNode !== chatBox) {
+          chatBox.prepend(keyBox);
+        }
+      });
+
+      function addMessage(role, text) {
+        if (welcomeScreen && welcomeScreen.parentNode) {
+          welcomeScreen.remove();
+        }
+        const div = document.createElement('div');
+        div.className = 'msg ' + (role === 'user' ? 'user' : 'bot');
+        div.textContent = text;
+        chatBox.appendChild(div);
+        chatScroll.scrollTop = chatScroll.scrollHeight;
+        return div;
+      }
+
+      async function sendMessage(overrideText) {
+        const text = (overrideText || userInput.value).trim();
+        if (!text) return;
+
+        const apiKey = getKey();
+        if (!apiKey) {
+          keyBox.style.display = 'flex';
+          keyStatusText.style.display = 'block';
+          keyStatusText.style.color = '#f87171';
+          keyStatusText.textContent = 'Enter and save your Gemini API key first.';
+          apiKeyInput.focus();
+          return;
+        }
+
+        if (!overrideText) userInput.value = '';
+        addMessage('user', text);
+        history.push({ role: 'user', parts: [{ text: text }] });
+
+        const loadingMsg = addMessage('bot', 'Thinking...');
+        sendBtn.disabled = true;
+
+        try {
+          const res = await fetch(
+            'https://generativelanguage.googleapis.com/v1beta/models/' + MODEL_ID + ':generateContent?key=' + encodeURIComponent(apiKey),
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                systemInstruction: { parts: [{ text: PERSONAS[personaSelect.value] || PERSONAS.host }] },
+                contents: history
+              })
+            }
+          );
+          const data = await res.json();
+          if (!res.ok) {
+            loadingMsg.textContent = 'Error: ' + (data.error && data.error.message ? data.error.message : res.status);
+          } else {
+            const reply = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0].text) || 'No reply.';
+            loadingMsg.textContent = reply;
+            history.push({ role: 'model', parts: [{ text: reply }] });
+          }
+        } catch (err) {
+          loadingMsg.textContent = 'Network error: ' + err.message;
+        } finally {
+          sendBtn.disabled = false;
+          chatScroll.scrollTop = chatScroll.scrollHeight;
+        }
+      }
+
+      sendBtn.addEventListener('click', function () { sendMessage(); });
+      userInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+
+      document.querySelectorAll('.card').forEach(function (card) {
+        card.addEventListener('click', function () {
+          sendMessage(card.getAttribute('data-prompt'));
+        });
+      });
+
+      refreshKeyUI();
+    })();
+  </script>
+</body>
+  </html>
